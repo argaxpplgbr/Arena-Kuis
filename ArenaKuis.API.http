@@ -1,0 +1,6 @@
+@ArenaKuis.API_HostAddress = http://localhost:5206
+
+GET {{ArenaKuis.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

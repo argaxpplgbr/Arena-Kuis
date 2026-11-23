@@ -1,0 +1,12 @@
+namespace ArenaKuis.API.Models;
+
+public class User
+{
+    public int Id{get; set;}
+    public string Username{get; set;} = "";
+    public string Nama{get; set;} = "";
+    public string PasswordHash{get; set;} = "";
+    public string Role{get; set;} = "Students";
+    public int XP{get; set;}
+    public DateTime CreatedAt{get; set;} = DateTime.UtcNow;
+}
