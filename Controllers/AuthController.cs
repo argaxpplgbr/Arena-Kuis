@@ -4,10 +4,12 @@ using ArenaKuis.API.DTOs;
 using ArenaKuis.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ArenaKuis.API.Controllers;
 
@@ -29,28 +31,60 @@ public class AuthController : ControllerBase
         _config = config;
     }
 
+    // =========================
+    // REGISTER
+    // =========================
+
     [HttpPost("register")]
-    public IActionResult Register(RegisterRequest request)
+    [EnableRateLimiting("RegisterLimit")]
+    public IActionResult Register(RegisterRequest? request)
     {
-        if (string.IsNullOrWhiteSpace(request.Username) ||
-            string.IsNullOrWhiteSpace(request.Nama) ||
-            string.IsNullOrWhiteSpace(request.Password))
+        if (request == null)
+        {
+            return BadRequest("Data registrasi tidak valid.");
+        }
+
+        string username = request.Username.Trim().ToLowerInvariant();
+        string nama = request.Nama.Trim();
+        string password = request.Password;
+
+        if (string.IsNullOrWhiteSpace(username) ||
+            string.IsNullOrWhiteSpace(nama) ||
+            string.IsNullOrWhiteSpace(password))
         {
             return BadRequest("Semua data wajib diisi.");
         }
 
-        if (request.Username.Length < 3)
+        if (username.Length < 3 || username.Length > 32)
         {
-            return BadRequest("Username minimal 3 karakter.");
+            return BadRequest(
+                "Username harus memiliki 3 sampai 32 karakter."
+            );
         }
 
-        if (request.Password.Length < 8)
+        if (!Regex.IsMatch(username, @"^[a-z0-9_-]+$"))
         {
-            return BadRequest("Password minimal 8 karakter.");
+            return BadRequest(
+                "Username hanya boleh berisi huruf, angka, underscore, dan tanda minus."
+            );
         }
 
-        var usernameExists = _db.Users.Any(
-            user => user.Username == request.Username
+        if (nama.Length < 2 || nama.Length > 60)
+        {
+            return BadRequest(
+                "Nama harus memiliki 2 sampai 60 karakter."
+            );
+        }
+
+        if (password.Length < 8 || password.Length > 128)
+        {
+            return BadRequest(
+                "Password harus memiliki 8 sampai 128 karakter."
+            );
+        }
+
+        bool usernameExists = _db.Users.Any(
+            user => user.Username == username
         );
 
         if (usernameExists)
@@ -60,31 +94,46 @@ public class AuthController : ControllerBase
 
         var user = new User
         {
-            Username = request.Username,
-            Nama = request.Nama,
+            Username = username,
+            Nama = nama,
             Role = "Student",
             XP = 0
         };
 
         user.PasswordHash = _hasher.HashPassword(
             user,
-            request.Password
+            password
         );
 
         _db.Users.Add(user);
-
         _db.SaveChanges();
 
         return Ok("Registrasi berhasil.");
     }
 
+    // =========================
+    // LOGIN
+    // =========================
+
     [HttpPost("login")]
-    public IActionResult Login(LoginRequest request)
+    [EnableRateLimiting("LoginLimit")]
+    public IActionResult Login(LoginRequest? request)
     {
+        if (request == null ||
+            string.IsNullOrWhiteSpace(request.Username) ||
+            string.IsNullOrWhiteSpace(request.Password))
+        {
+            return BadRequest("Username dan password wajib diisi.");
+        }
+
+        string username = request.Username.Trim().ToLowerInvariant();
+
         var user = _db.Users.FirstOrDefault(
-            user => user.Username == request.Username
+            user => user.Username == username
         );
 
+        // Pesan sama supaya tidak membocorkan
+        // username yang terdaftar.
         if (user == null)
         {
             return Unauthorized("Username atau password salah.");
@@ -101,7 +150,19 @@ public class AuthController : ControllerBase
             return Unauthorized("Username atau password salah.");
         }
 
-        var token = BuatToken(user);
+        // Hash password diperbarui otomatis
+        // jika algoritma hash membutuhkan peningkatan.
+        if (result == PasswordVerificationResult.SuccessRehashNeeded)
+        {
+            user.PasswordHash = _hasher.HashPassword(
+                user,
+                request.Password
+            );
+
+            _db.SaveChanges();
+        }
+
+        string token = BuatToken(user);
 
         return Ok(new AuthResponse
         {
@@ -113,17 +174,34 @@ public class AuthController : ControllerBase
         });
     }
 
+    // =========================
+    // PEMBUATAN JWT
+    // =========================
+
     private string BuatToken(User user)
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, user.Role)
+            new Claim(
+                ClaimTypes.NameIdentifier,
+                user.Id.ToString()
+            ),
+
+            new Claim(
+                ClaimTypes.Name,
+                user.Username
+            ),
+
+            new Claim(
+                ClaimTypes.Role,
+                user.Role
+            )
         };
 
+        string jwtKey = _config["Jwt:Key"]!;
+
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)
+            Encoding.UTF8.GetBytes(jwtKey)
         );
 
         var credentials = new SigningCredentials(
@@ -139,6 +217,7 @@ public class AuthController : ControllerBase
             signingCredentials: credentials
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return new JwtSecurityTokenHandler()
+            .WriteToken(token);
     }
 }

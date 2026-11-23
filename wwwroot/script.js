@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api";
+const API_URL = "/api";
 
 let token = localStorage.getItem("arenaToken");
 let currentUser = JSON.parse(localStorage.getItem("arenaUser")) || null;
@@ -50,6 +50,20 @@ async function api(endpoint, options = {}) {
 
     return data;
 }
+
+
+async function getResultsForCurrentUser() {
+    if (currentUser.role === "Student") {
+        return await api("/results/my-results");
+    }
+
+    if (["Teacher", "Admin"].includes(currentUser.role)) {
+        return await api("/results/teacher-results");
+    }
+
+    throw new Error("Role pengguna tidak dikenali.");
+}
+
 
 function showToast(message) {
     const toast = document.getElementById("toast");
@@ -300,9 +314,10 @@ async function navigateTo(page) {
 
 // dashboard
 
+
 async function renderDashboard() {
     const quizzes = await api("/quizzes");
-    const results = await api("/results/my-results");
+    const results = await getResultsForCurrentUser();
 
     const averageScore = results.length
         ? Math.round(
@@ -310,6 +325,8 @@ async function renderDashboard() {
             / results.length
         )
         : 0;
+
+    const isStudent = currentUser.role === "Student";
 
     pageContent.innerHTML = `
         <div class="page-heading">
@@ -327,7 +344,9 @@ async function renderDashboard() {
             </div>
 
             <div class="stat-card">
-                <span class="stat-label">QUIZ SELESAI</span>
+                <span class="stat-label">
+                    ${isStudent ? "QUIZ SELESAI" : "TOTAL PERCObAAN"}
+                </span>
                 <div class="stat-value">${results.length}</div>
             </div>
 
@@ -340,17 +359,29 @@ async function renderDashboard() {
         <div class="dashboard-grid">
             <div class="card welcome-card">
                 <span class="content-eyebrow">A LITTLE CHALLENGE</span>
-                <h2>Belajar nggak harus selalu serius.</h2>
-                <p>Pilih kuis, jawab pertanyaan, dan kumpulkan XP-mu.</p>
+                <h2>
+                    ${isStudent
+                        ? "Belajar nggak harus selalu serius."
+                        : "Kelola pembelajaran di ArenaKuis."}
+                </h2>
+                <p>
+                    ${isStudent
+                        ? "Pilih kuis, jawab pertanyaan, dan kumpulkan XP-mu."
+                        : "Buat soal, susun kuis, dan pantau hasil siswa."}
+                </p>
                 <button class="button button-primary"
-                    onclick="navigateTo('quizzes')">
-                    Explore quizzes →
+                    onclick="navigateTo('${isStudent ? "quizzes" : "teacher"}')">
+                    ${isStudent ? "Explore quizzes →" : "Teacher Studio →"}
                 </button>
             </div>
 
             <div class="card">
                 <h3 class="card-title">Recent activity</h3>
-                <p class="muted">Hasil kuis terakhir kamu.</p>
+                <p class="muted">
+                    ${isStudent
+                        ? "Hasil kuis terakhir kamu."
+                        : "Hasil percobaan kuis siswa."}
+                </p>
 
                 <div class="recent-list" style="margin-top:18px;">
                     ${
@@ -369,25 +400,28 @@ async function renderDashboard() {
             </div>
         </div>
 
-        <div style="margin-top:25px;">
-            <div class="page-heading">
-                <div>
-                    <span class="content-eyebrow">PICK YOUR NEXT CHALLENGE</span>
-                    <h2 style="font-family:var(--heading);">Recommended quizzes</h2>
+        ${isStudent ? `
+            <div style="margin-top:25px;">
+                <div class="page-heading">
+                    <div>
+                        <span class="content-eyebrow">PICK YOUR NEXT CHALLENGE</span>
+                        <h2 style="font-family:var(--heading);">Recommended quizzes</h2>
+                    </div>
+
+                    <button class="button button-secondary"
+                        onclick="navigateTo('quizzes')">
+                        View all
+                    </button>
                 </div>
 
-                <button class="button button-secondary"
-                    onclick="navigateTo('quizzes')">
-                    View all
-                </button>
+                <div class="quiz-grid">
+                    ${quizzes.slice(0, 2).map(quiz => quizCard(quiz)).join("")}
+                </div>
             </div>
-
-            <div class="quiz-grid">
-                ${quizzes.slice(0, 2).map(quiz => quizCard(quiz)).join("")}
-            </div>
-        </div>
+        ` : ""}
     `;
 }
+
 
 
 // quizzes
@@ -855,15 +889,21 @@ async function renderLeaderboard() {
 
 // history
 
+
 async function renderHistory() {
-    const results = await api("/results/my-results");
+    const results = await getResultsForCurrentUser();
+    const isStudent = currentUser.role === "Student";
 
     pageContent.innerHTML = `
         <div class="page-heading">
             <div>
                 <span class="content-eyebrow">YOUR PROGRESS</span>
-                <h1>My History</h1>
-                <p>Riwayat kuis yang pernah kamu kerjakan.</p>
+                <h1>${isStudent ? "My History" : "Student Results"}</h1>
+                <p>
+                    ${isStudent
+                        ? "Riwayat kuis yang pernah kamu kerjakan."
+                        : "Riwayat hasil kuis siswa dari kuis yang kamu buat."}
+                </p>
             </div>
         </div>
 
@@ -872,6 +912,7 @@ async function renderHistory() {
                 <table class="data-table">
                     <thead>
                         <tr>
+                            ${isStudent ? "" : "<th>STUDENT ID</th>"}
                             <th>QUIZ ID</th>
                             <th>SKOR</th>
                             <th>BENAR</th>
@@ -884,6 +925,7 @@ async function renderHistory() {
                         ${
                             results.map(result => `
                                 <tr>
+                                    ${isStudent ? "" : `<td>${result.studentId}</td>`}
                                     <td>Quiz #${result.quizId}</td>
                                     <td><span class="score-tag">${result.score}%</span></td>
                                     <td>${result.correctAnswer}/${result.totalQuestions}</td>
@@ -891,7 +933,7 @@ async function renderHistory() {
                                     <td>${formatDate(result.completedAt)}</td>
                                 </tr>
                             `).join("")
-                            || `<tr><td colspan="5">Belum ada riwayat kuis.</td></tr>`
+                            || `<tr><td colspan="${isStudent ? 5 : 6}">Belum ada hasil kuis.</td></tr>`
                         }
                     </tbody>
                 </table>
@@ -899,6 +941,7 @@ async function renderHistory() {
         </div>
     `;
 }
+
 
 
 // teacher
