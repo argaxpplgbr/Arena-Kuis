@@ -1,0 +1,358 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Arena Kuis</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- LOGIN -->
+    <section id="authPage" class="auth-page">
+
+        <div class="auth-decoration">
+            <div class="auth-decoration-circle"></div>
+            <div class="auth-decoration-circle circle-two"></div>
+
+            <div class="auth-brand">
+                <span class="brand-mark">A</span>
+                <span>Arena Kuis</span>
+            </div>
+
+            <div class="auth-message">
+                <span class="eyebrow">YOUR LITTLE STUDY SPACE</span>
+
+                <h1>Learn something.<br>
+                    Play something.</h1>
+
+                <p>
+                    Tempat belajar, bermain, dan menguji
+                    seberapa jauh kemampuanmu.
+                </p>
+            </div>
+
+            <div class="auth-bottom">
+                <span>MADE FOR CURIOUS MINDS</span>
+                <span>01 / 01</span>
+            </div>
+        </div>
+
+        <div class="auth-form-wrapper">
+
+            <div class="auth-form" id="authForm">
+
+                <div class="auth-heading">
+                    <span class="small-label">WELCOME BACK</span>
+                    <h2 id="authTitle">Masuk ke Arena</h2>
+                    <p id="authDescription">
+                        Masuk dan lanjutkan perjalanan belajarmu.
+                    </p>
+                </div>
+
+                <form id="authFormElement">
+
+                    <div id="namaGroup" class="form-group hidden">
+                        <label for="namaInput">Nama lengkap</label>
+
+                        <input
+                            type="text"
+                            id="namaInput"
+                            placeholder="Nama kamu"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="usernameInput">Username</label>
+
+                        <input
+                            type="text"
+                            id="usernameInput"
+                            placeholder="Masukkan username"
+                            autocomplete="username"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="passwordInput">Password</label>
+
+                        <input
+                            type="password"
+                            id="passwordInput"
+                            placeholder="Masukkan password"
+                            autocomplete="current-password"
+                            required
+                        >
+                    </div>
+
+                    <button
+                        class="button button-primary button-full"
+                        type="submit"
+                        id="authSubmit"
+                    >
+                        Masuk
+                    </button>
+
+                </form>
+
+                <div class="auth-switch">
+                    <span id="authSwitchText">
+                        Belum punya akun?
+                    </span>
+
+                    <button id="authSwitch" class="text-button">
+                        Daftar
+                    </button>
+                </div>
+
+                <p class="auth-error" id="authError"></p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- APPLICATION -->
+    <section id="appPage" class="app-page hidden">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+                <div class="brand-mark">A</div>
+
+                <div>
+                    <strong>Arena Kuis</strong>
+                    <span>Learning playground</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <span class="sidebar-label">MENU</span>
+
+                <button class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">⌂</span>
+                    Dashboard
+                </button>
+
+                <button class="nav-item" data-page="quizzes">
+                    <span class="nav-icon">▤</span>
+                    Explore Quiz
+                </button>
+
+                <button class="nav-item" data-page="classrooms">
+                    <span class="nav-icon">▦</span>
+                    My Classroom
+                </button>
+
+                <button class="nav-item" data-page="leaderboard">
+                    <span class="nav-icon">♔</span>
+                    Leaderboard
+                </button>
+
+                <button class="nav-item" data-page="history">
+                    <span class="nav-icon">◷</span>
+                    My History
+                </button>
+            </div>
+
+            <div id="teacherMenu" class="sidebar-section hidden">
+                <span class="sidebar-label">TEACHER SPACE</span>
+
+                <button class="nav-item" data-page="teacher">
+                    <span class="nav-icon">＋</span>
+                    Studio
+                </button>
+            </div>
+
+            <div class="sidebar-bottom">
+
+                <div class="user-card">
+                    <div class="avatar" id="userAvatar">A</div>
+
+                    <div class="user-info">
+                        <strong id="userName">User</strong>
+                        <span id="userRole">Student</span>
+                    </div>
+
+                    <button id="logoutButton" class="logout-button"
+                        title="Keluar">
+                        ↗
+                    </button>
+                </div>
+
+            </div>
+
+        </aside>
+
+
+        <!-- MAIN -->
+        <main class="workspace">
+
+            <header class="topbar">
+
+                <div class="breadcrumb">
+                    <span>ARENA</span>
+                    <span>/</span>
+                    <strong id="currentPageName">Dashboard</strong>
+                </div>
+
+                <div class="topbar-right">
+
+                    <div class="xp-pill">
+                        <span class="xp-star">✦</span>
+                        <span id="userXP">0 XP</span>
+                    </div>
+
+                    <div class="topbar-avatar" id="topAvatar">A</div>
+
+                </div>
+
+            </header>
+
+
+            <!-- MONITOR -->
+            <section class="monitor-area">
+
+                <div class="monitor">
+
+                    <div class="monitor-frame">
+
+                        <div class="monitor-top">
+
+                            <div class="monitor-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+
+                            <span class="monitor-title">
+                                ARENA STUDY DESK
+                            </span>
+
+                            <span class="monitor-status">
+                                <i></i>
+                                ONLINE
+                            </span>
+
+                        </div>
+
+                        <div class="monitor-screen">
+
+                            <div id="pageContent"></div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="monitor-neck"></div>
+                    <div class="monitor-base"></div>
+
+                </div>
+
+
+                <!-- LAPTOP -->
+                <div class="laptop">
+
+                    <div class="laptop-screen">
+
+                        <div class="laptop-screen-inner">
+
+                            <div class="laptop-header">
+                                <span class="laptop-logo">A.</span>
+                                <span>QUICK MENU</span>
+                                <span class="laptop-dot"></span>
+                            </div>
+
+                            <div class="laptop-menu">
+
+                                <button data-page="dashboard">
+                                    <span>⌂</span>
+                                    Home
+                                </button>
+
+                                <button data-page="quizzes">
+                                    <span>▤</span>
+                                    Quiz
+                                </button>
+
+                                <button data-page="classrooms">
+                                    <span>▦</span>
+                                    Class
+                                </button>
+
+                                <button data-page="leaderboard">
+                                    <span>♔</span>
+                                    Rank
+                                </button>
+
+                            </div>
+
+                            <div class="laptop-mini-profile">
+
+                                <div class="mini-avatar" id="miniAvatar">
+                                    A
+                                </div>
+
+                                <div>
+                                    <strong id="miniName">User</strong>
+                                    <span>YOUR STUDY DESK</span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="laptop-base">
+                        <div class="laptop-keyboard"></div>
+                        <div class="laptop-trackpad"></div>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <footer class="workspace-footer">
+
+                <span>
+                    ARENA QUIZ · LEARNING IS A GAME
+                </span>
+
+                <span id="footerClock">--:--</span>
+
+            </footer>
+
+        </main>
+
+    </section>
+
+
+    <!-- NOTIFICATION -->
+    <div id="toast" class="toast"></div>
+
+
+    <!-- MODAL -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+
+        <div class="modal-box">
+            <button id="modalClose" class="modal-close">×</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
